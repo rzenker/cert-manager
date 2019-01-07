@@ -100,7 +100,10 @@ func checkAuthoritativeNss(fqdn, value string, nameservers []string) (bool, erro
 	for _, ns := range nameservers {
 		r, err := dnsQuery(fqdn, dns.TypeTXT, []string{net.JoinHostPort(ns, "53")}, false)
 		if err != nil {
-			return false, err
+			// log the error in case there's no reachability to auth NSs, but
+			// allow retry logic instead of failing the whole request
+			glog.Infof("authoritative NS check failed for %s: %s", fqdn, err)
+			return false, nil
 		}
 
 		// NXDomain response is not really an error, just waiting for propagation to happen
